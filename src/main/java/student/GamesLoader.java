@@ -72,7 +72,7 @@ public final class GamesLoader {
     private static BoardGame toBoardGame(String line, Map<GameData, Integer> columnMap) {
         String[] columns = line.split(DELIMITER);
         int maxIndex = columnMap.values().stream().max(Integer::compareTo).orElse(0);
-        // Use <= because indices are zero-based.
+        // Because indices are 0-based, if columns.length is less than or equal to maxIndex, data is missing.
         if (columns.length <= maxIndex) {
             return null;
         }
@@ -90,7 +90,7 @@ public final class GamesLoader {
             int year = Integer.parseInt(columns[columnMap.get(GameData.YEAR)].trim());
             return new BoardGame(name, id, minPlayers, maxPlayers, minTime, maxTime, difficulty, rank, rating, year);
         } catch (NumberFormatException e) {
-            // Skip the line if there's a parsing issue.
+            // skip the line if there's a parsing issue.
             return null;
         }
     }
@@ -109,8 +109,8 @@ public final class GamesLoader {
         Map<GameData, Integer> columnMap = new HashMap<>();
         String[] columns = header.split(DELIMITER);
         for (int i = 0; i < columns.length; i++) {
-            // Trim each token to remove extra spaces.
-            String token = columns[i].trim();
+            // Trim and convert each token to lower case.
+            String token = columns[i].trim().toLowerCase();
             try {
                 GameData col = GameData.fromColumnName(token);
                 columnMap.put(col, i);

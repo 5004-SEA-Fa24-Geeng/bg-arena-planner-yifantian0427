@@ -8,10 +8,8 @@ public final class Filters {
 
         switch (column) {
             case NAME:
-                // Filter the name using a string comparison
                 return filterString(game.getName(), op, value);
             case MAX_PLAYERS:
-                // Example: filtering on maximum players
                 return filterNum(game.getMaxPlayers(), op, value);
             case MIN_PLAYERS:
                 return filterNum(game.getMinPlayers(), op, value);
@@ -23,20 +21,23 @@ public final class Filters {
                 return filterNum(game.getRank(), op, value);
             case YEAR:
                 return filterNum(game.getYearPublished(), op, value);
-            // You can add more cases (e.g., RATING, DIFFICULTY) as needed.
+            // Extend with additional cases if needed.
             default:
                 return false;
         }
     }
 
     public static boolean filterString(String gameData, Operations op, String value) {
+        // Trim both strings before comparing.
+        String trimmedData = gameData.trim();
+        String trimmedValue = value.trim();
         switch (op) {
             case EQUALS:
-                return gameData.equalsIgnoreCase(value);
+                return trimmedData.equalsIgnoreCase(trimmedValue);
             case NOT_EQUALS:
-                return !gameData.equalsIgnoreCase(value);
+                return !trimmedData.equalsIgnoreCase(trimmedValue);
             case CONTAINS:
-                return gameData.toLowerCase().contains(value.toLowerCase());
+                return trimmedData.toLowerCase().contains(trimmedValue.toLowerCase());
             default:
                 return false;
         }
@@ -45,7 +46,7 @@ public final class Filters {
     public static boolean filterNum(int gameData, Operations op, String value) {
         int parsedValue;
         try {
-            parsedValue = Integer.parseInt(value);
+            parsedValue = Integer.parseInt(value.trim());
         } catch (NumberFormatException e) {
             return false;
         }

@@ -25,7 +25,7 @@ public class Planner implements IPlanner {
         if (filter == null || filter.trim().isEmpty()) {
             return base;
         }
-        // Trim the filter string (but do not remove all internal spaces)
+        // Trim the filter string
         filter = filter.trim();
         // Apply each condition (separated by commas) to the full set.
         String[] conditions = filter.split(",");
@@ -55,32 +55,33 @@ public class Planner implements IPlanner {
     /**
      * Filters games for a single condition.
      *
-     * @param filter the filter condition (e.g., "name~=Fish")
+     * @param filter the filter condition (e.g., "name~=o")
      * @param filterGames the stream of games to filter
      * @return a stream of games matching the condition
      */
     private Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filterGames) {
-        // Identify the operator using the provided Operations helper.
+        // Identify the operator using the Operations helper.
         Operations operator = Operations.getOperatorFromStr(filter);
         if (operator == null) {
             return filterGames;
         }
-        // Trim the condition (do not remove internal spaces)
+        // Trim the condition.
         filter = filter.trim();
         // Use Pattern.quote to treat the operator literally.
         String[] parts = filter.split(Pattern.quote(operator.getOperator()));
         if (parts.length != 2) {
             return filterGames;
         }
-        // Convert both the column and the value to lower case.
+        // Convert the column part to lower case (for lookup) but leave value as-is.
         String columnStr = parts[0].trim().toLowerCase();
-        String value = parts[1].trim().toLowerCase();
+        String value = parts[1].trim();
         GameData column;
         try {
             column = GameData.fromString(columnStr);
         } catch (IllegalArgumentException e) {
             return filterGames;
         }
+        // Let Filters.filter perform a case-insensitive comparison.
         return filterGames.filter(game -> Filters.filter(game, column, operator, value));
     }
 

@@ -7,7 +7,133 @@ This document is meant to provide a tool for you to demonstrate the design proce
 ## (INITIAL DESIGN): Class Diagram 
 
 Place your class diagrams below. Make sure you check the file in the browser on github.com to make sure it is rendering correctly. If it is not, you will need to fix it. As a reminder, here is a link to tools that can help you create a class diagram: [Class Resources: Class Design Tools](https://github.com/CS5004-khoury-lionelle/Resources?tab=readme-ov-file#uml-design-tools)
+```mermaid
+classDiagram
+    direction TB
+    
+    %% Interfaces
+    class IGameList {
+        +List<String> getGameNames()
+        +void clear()
+        +int count()
+        +void saveGame(String filename)
+        +void addToList(String str, Stream<BoardGame> filtered) throws IllegalArgumentException
+        +void removeFromList(String str) throws IllegalArgumentException
+    }
 
+    class IPlanner {
+        +Stream<BoardGame> filter(String filter)
+        +Stream<BoardGame> filter(String filter, GameData sortOn)
+        +Stream<BoardGame> filter(String filter, GameData sortOn, boolean ascending)
+        +void reset()
+    }
+
+    %% Concrete Classes
+    class BoardGame {
+        +String name
+        +int id
+        +int minPlayers
+        +int maxPlayers
+        +int minPlayTime
+        +int maxPlayTime
+        +double difficulty
+        +int rank
+        +double averageRating
+        +int yearPublished
+        +String getName()
+        +int getId()
+        +int getMinPlayers()
+        +int getMaxPlayers()
+        +int getMinPlayTime()
+        +int getMaxPlayTime()
+        +double getDifficulty()
+        +int getRank()
+        +double getRating()
+        +int getYearPublished()
+        +String toStringWithInfo(GameData col)
+    }
+
+    class GameList {
+        +List<String> games
+        +GameList()
+        +List<String> getGameNames()
+        +void clear()
+        +int count()
+        +void saveGame(String filename)
+        +void addToList(String str, Stream<BoardGame> filtered)
+        +void removeFromList(String str)
+    }
+
+    class Planner {
+        +Set<BoardGame> gameCollection
+        +Planner(Set<BoardGame> games)
+        +Stream<BoardGame> filter(String filter)
+        +Stream<BoardGame> filter(String filter, GameData sortOn)
+        +Stream<BoardGame> filter(String filter, GameData sortOn, boolean ascending)
+        +void reset()
+    }
+
+    class GamesLoader {
+        +static Set<BoardGame> loadGamesFile(String filename)
+    }
+
+    class ConsoleApp {
+        -Scanner IN
+        -IGameList gameList
+        -IPlanner planner
+        +ConsoleApp(IGameList gameList, IPlanner planner)
+        +void start()
+        +void processHelp()
+        +void processFilter()
+        +void processListCommands()
+    }
+
+    class BGArenaPlanner {
+        -static final String DEFAULT_COLLECTION
+        -BGArenaPlanner()
+        +static void main(String[] args)
+    }
+
+    class GameData {
+        <<enum>>
+        +NAME
+        +ID
+        +RATING
+        +DIFFICULTY
+        +RANK
+        +MIN_PLAYERS
+        +MAX_PLAYERS
+        +MIN_TIME
+        +MAX_TIME
+        +YEAR
+    }
+
+    class Operations {
+        <<enum>>
+        +EQUALS
+        +NOT_EQUALS
+        +GREATER_THAN
+        +LESS_THAN
+        +GREATER_THAN_EQUALS
+        +LESS_THAN_EQUALS
+        +CONTAINS
+        +static Operations fromOperator(String operator)
+    }
+
+    %% Relationships
+    IGameList <|.. GameList
+    IPlanner <|.. Planner
+    GameList --> BoardGame
+    Planner --> BoardGame
+    GamesLoader --> BoardGame
+    ConsoleApp --> IGameList
+    ConsoleApp --> IPlanner
+    BGArenaPlanner --> ConsoleApp
+    BGArenaPlanner --> GamesLoader
+    Planner --> GameData
+    Planner --> Operations
+
+```
 ### Provided Code
 
 Provide a class diagram for the provided code as you read through it.  For the classes you are adding, you will create them as a separate diagram, so for now, you can just point towards the interfaces for the provided code diagram.
@@ -36,8 +162,27 @@ Write a test (in english) that you can picture for the class diagram you have cr
 
 You should feel free to number your brainstorm. 
 
-1. Test 1..
-2. Test 2..
+1. GameList Tests:
+    
+    1. Create a new GameList and check it initializes empty. 
+    
+    2. Add a game and verify it appears in the list.
+    
+    3. Ensure duplicate games are not added. 
+
+    4. Remove a game and check it is removed.
+
+    5. Save and load game lists from a file.
+
+2.  Planner Tests:
+
+    1. Load a set of board games and verify filtering by:
+    > 1. minPlayers > 4
+    > 2. difficulty < 3.5
+    > 3. name ~= Catan
+    2. Test sorting options (e.g., rating ascending/descending).
+    3. Reset filters and check all games are available again.
+
 
 
 

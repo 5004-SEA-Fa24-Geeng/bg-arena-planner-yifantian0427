@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 public class Planner implements IPlanner {
 
     private final List<BoardGame> originalGames;
+    // currentFiltered is maintained for reset() but not used for filtering if a filter is provided.
     private List<BoardGame> currentFiltered;
 
     public Planner(Set<BoardGame> games) {
@@ -24,17 +25,17 @@ public class Planner implements IPlanner {
     @Override
     public Stream<BoardGame> filter(String filter) {
         if (filter == null || filter.trim().isEmpty()) {
-            return currentFiltered.stream();
+            // If filter is empty, return the full collection.
+            return originalGames.stream();
         }
-        // Support multiple filter conditions separated by commas.
+        // Use the original full list for filtering so each call starts fresh.
+        List<BoardGame> result = originalGames;
+        // Support multiple conditions separated by commas.
         String[] conditions = filter.split(",");
-        List<BoardGame> result = currentFiltered;
         for (String condition : conditions) {
             result = filterSingle(condition, result.stream()).collect(Collectors.toList());
         }
-        // Update the current filtered list (progressive filtering).
-        currentFiltered = result;
-        return currentFiltered.stream();
+        return result.stream();
     }
 
     private Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filteredGames) {
@@ -56,7 +57,6 @@ public class Planner implements IPlanner {
             return filteredGames;
         }
         String value = parts[1].trim();
-        // Apply the filter via the Filters helper.
         List<BoardGame> filteredGameList = filteredGames
                 .filter(game -> Filters.filter(game, column, operator, value))
                 .collect(Collectors.toList());
@@ -77,11 +77,10 @@ public class Planner implements IPlanner {
 
     @Override
     public void reset() {
-        // Reset the filtered list to include all games.
+        // Reset the current filtered list to the full collection.
         currentFiltered = new ArrayList<>(originalGames);
     }
 
-    // Helper method to return a Comparator based on the GameData column and order.
     private Comparator<BoardGame> getComparator(GameData sortOn, boolean ascending) {
         Comparator<BoardGame> comparator;
         switch (sortOn) {

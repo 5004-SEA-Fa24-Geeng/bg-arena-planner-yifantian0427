@@ -25,18 +25,23 @@ public class Planner implements IPlanner {
     @Override
     public Stream<BoardGame> filter(String filter) {
         if (filter == null || filter.trim().isEmpty()) {
-            // If filter is empty, return the full collection.
-            return originalGames.stream();
+            // If filter is empty, return the full collection, sorted by name.
+            return originalGames.stream()
+                    .sorted(Comparator.comparing(game -> game.getName().toLowerCase()));
         }
-        // Use the original full list for filtering so each call starts fresh.
+        // Always start from the full collection.
         List<BoardGame> result = originalGames;
         // Support multiple conditions separated by commas.
         String[] conditions = filter.split(",");
         for (String condition : conditions) {
-            result = filterSingle(condition, result.stream()).collect(Collectors.toList());
+            result = filterSingle(condition, result.stream())
+                    .collect(Collectors.toList());
         }
-        return result.stream();
+        // Return the result sorted by game name (case-insensitive)
+        return result.stream()
+                .sorted(Comparator.comparing(game -> game.getName().toLowerCase()));
     }
+
 
     private Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filteredGames) {
         // Identify the operator using the provided Operations helper.

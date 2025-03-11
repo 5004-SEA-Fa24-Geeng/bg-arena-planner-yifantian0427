@@ -15,10 +15,10 @@ import java.util.stream.Collectors;
  * Loads the games from the csv file into a set of BoardGame objects.
  * This file is stored in the resources folder, and while it is
  * passed in - often tends to be more fixed.
- * 
+ *
  * It assumes there are no comma's in the data (and does not handle errors if
  * there are extra commas like in the name).
- * 
+ *
  */
 public final class GamesLoader {
     /** Standard csv delim. */
@@ -30,7 +30,7 @@ public final class GamesLoader {
 
     /**
      * Loads the games from the csv file into a set of BoardGame objects.
-     * 
+     *
      * @param filename the name of the file to load
      * @return a set of BoardGame objects
      */
@@ -64,7 +64,7 @@ public final class GamesLoader {
 
     /**
      * Converts a line from the csv file into a BoardGame object.
-     * 
+     *
      * @param line      the line to convert
      * @param columnMap the map of columns to index
      * @return a BoardGame object
@@ -95,11 +95,11 @@ public final class GamesLoader {
 
     /**
      * Processes the header line to determine the column mapping.
-     * 
+     *
      * It is common to do this for csv files as the columns can be in any order.
      * This makes it order independent by taking a moment to link the columns
      * with their actual index in the file.
-     * 
+     *
      * @param header the header line
      * @return a map of column to index
      */
@@ -107,11 +107,13 @@ public final class GamesLoader {
         Map<GameData, Integer> columnMap = new HashMap<>();
         String[] columns = header.split(DELIMITER);
         for (int i = 0; i < columns.length; i++) {
+            // Trim each token to remove extra spaces.
+            String token = columns[i].trim();
             try {
-                GameData col = GameData.fromColumnName(columns[i]);
+                GameData col = GameData.fromColumnName(token);
                 columnMap.put(col, i);
             } catch (IllegalArgumentException e) {
-                // System.out.println("Ignoring column: " + columns[i]);
+                // Ignoring columns that don't match.
             }
         }
         return columnMap;

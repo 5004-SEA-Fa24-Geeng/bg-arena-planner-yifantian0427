@@ -1,9 +1,10 @@
 package student;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,7 +25,7 @@ public class Planner implements IPlanner {
         if (filter == null || filter.trim().isEmpty()) {
             return base;
         }
-        // Trim the filter string
+        // Trim the filter string.
         filter = filter.trim();
         // Apply each condition (separated by commas) to the full set.
         String[] conditions = filter.split(",");
@@ -59,31 +60,43 @@ public class Planner implements IPlanner {
      * @return a stream of games matching the condition
      */
     private Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filterGames) {
-        // Force CONTAINS operator if the filter contains "~="
+        filter = filter.trim();
         Operations operator;
+        String columnStr;
+        String value;
+
+        // If the condition uses the CONTAINS operator, use a regex to allow spaces around "~="
         if (filter.contains("~=")) {
             operator = Operations.CONTAINS;
+            // Pattern: one or more non-space characters for the column, optional spaces, "~=", optional spaces, then the rest for value.
+            Pattern pattern = Pattern.compile("(\\S+)\\s*~=\\s*(.+)");
+            Matcher matcher = pattern.matcher(filter);
+            if (matcher.matches()) {
+                columnStr = matcher.group(1).trim().toLowerCase();
+                value = matcher.group(2).trim();
+            } else {
+                return filterGames;
+            }
         } else {
+            // For all other operators, use the existing approach.
             operator = Operations.getOperatorFromStr(filter);
+            if (operator == null) {
+                return filterGames;
+            }
+            int opIndex = filter.indexOf(operator.getOperator());
+            if (opIndex < 0) {
+                return filterGames;
+            }
+            columnStr = filter.substring(0, opIndex).trim().toLowerCase();
+            value = filter.substring(opIndex + operator.getOperator().length()).trim();
         }
-        if (operator == null) {
-            return filterGames;
-        }
-        filter = filter.trim();
-        // Use indexOf and substring to reliably extract parts.
-        int opIndex = filter.indexOf(operator.getOperator());
-        if (opIndex < 0) {
-            return filterGames;
-        }
-        String columnStr = filter.substring(0, opIndex).trim().toLowerCase();
-        String value = filter.substring(opIndex + operator.getOperator().length()).trim();
         GameData column;
         try {
             column = GameData.fromString(columnStr);
         } catch (IllegalArgumentException e) {
             return filterGames;
         }
-        // Let Filters.filter perform a case-insensitive comparison.
+        // Delegate to Filters.filter for a case-insensitive comparison.
         return filterGames.filter(game -> Filters.filter(game, column, operator, value));
     }
 

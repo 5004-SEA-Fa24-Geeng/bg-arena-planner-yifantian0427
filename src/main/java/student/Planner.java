@@ -10,57 +10,26 @@ import java.util.stream.Stream;
 public class Planner implements IPlanner {
 
     private final List<BoardGame> originalGames;
-    // currentFiltered is maintained for reset() but not used for filtering if a filter is provided.
-    private List<BoardGame> currentFiltered;
 
     public Planner(Set<BoardGame> games) {
         // Store the full collection in a sorted list (by name, case-insensitive).
         this.originalGames = games.stream()
                 .sorted(Comparator.comparing(game -> game.getName().toLowerCase()))
                 .collect(Collectors.toList());
-        // Initially, the filtered list includes all games.
-        this.currentFiltered = new ArrayList<>(this.originalGames);
     }
 
     @Override
     public Stream<BoardGame> filter(String filter) {
+        Stream<BoardGame> base = originalGames.stream();
         if (filter == null || filter.trim().isEmpty()) {
-            // If filter is empty, return the full collection.
-            return originalGames.stream();
+            return base;
         }
-        // Use the original full list for filtering so each call starts fresh.
-        List<BoardGame> result = originalGames;
-        // Support multiple conditions separated by commas.
+        // Apply each condition (separated by commas) to the full set.
         String[] conditions = filter.split(",");
         for (String condition : conditions) {
-            result = filterSingle(condition, result.stream()).collect(Collectors.toList());
+            base = filterSingle(condition, base);
         }
-        return result.stream();
-    }
-
-    private Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filteredGames) {
-        // Identify the operator using the provided Operations helper.
-        Operations operator = Operations.getOperatorFromStr(filter);
-        if (operator == null) {
-            return filteredGames;
-        }
-        // Remove spaces.
-        filter = filter.replaceAll(" ", "");
-        String[] parts = filter.split(operator.getOperator());
-        if (parts.length != 2) {
-            return filteredGames;
-        }
-        GameData column;
-        try {
-            column = GameData.fromString(parts[0]);
-        } catch (IllegalArgumentException e) {
-            return filteredGames;
-        }
-        String value = parts[1].trim();
-        List<BoardGame> filteredGameList = filteredGames
-                .filter(game -> Filters.filter(game, column, operator, value))
-                .collect(Collectors.toList());
-        return filteredGameList.stream();
+        return base;
     }
 
     @Override
@@ -77,8 +46,36 @@ public class Planner implements IPlanner {
 
     @Override
     public void reset() {
-        // Reset the current filtered list to the full collection.
-        currentFiltered = new ArrayList<>(originalGames);
+        // No progressive filtering state is maintained.
+    }
+
+    /**
+     * Filters games for a single condition.
+     *
+     * @param filter the filter condition (e.g., "name~=fish")
+     * @param filterGames the stream of games to filter
+     * @return a stream of games matching the condition
+     */
+    private Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filterGames) {
+        // Identify the operator.
+        Operations operator = Operations.getOperatorFromStr(filter);
+        if (operator == null) {
+            return filterGames;
+        }
+        // Remove spaces.
+        filter = filter.replaceAll(" ", "");
+        String[] parts = filter.split(operator.getOperator());
+        if (parts.length != 2) {
+            return filterGames;
+        }
+        GameData column;
+        try {
+            column = GameData.fromString(parts[0]);
+        } catch (IllegalArgumentException e) {
+            return filterGames;
+        }
+        String value = parts[1].trim();
+        return filterGames.filter(game -> Filters.filter(game, column, operator, value));
     }
 
     private Comparator<BoardGame> getComparator(GameData sortOn, boolean ascending) {

@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
  *
  * It assumes there are no comma's in the data (and does not handle errors if
  * there are extra commas like in the name).
- *
  */
 public final class GamesLoader {
     /** Standard csv delim. */
@@ -55,11 +54,12 @@ public final class GamesLoader {
 
         Map<GameData, Integer> columnMap = processHeader(lines.remove(0));
 
-        games = lines.stream().map(line -> toBoardGame(line, columnMap))
-                .filter(game -> game != null).collect(Collectors.toSet());
+        games = lines.stream()
+                .map(line -> toBoardGame(line, columnMap))
+                .filter(game -> game != null)
+                .collect(Collectors.toSet());
 
         return games;
-
     }
 
     /**
@@ -67,28 +67,30 @@ public final class GamesLoader {
      *
      * @param line      the line to convert
      * @param columnMap the map of columns to index
-     * @return a BoardGame object
+     * @return a BoardGame object, or null if conversion fails
      */
     private static BoardGame toBoardGame(String line, Map<GameData, Integer> columnMap) {
         String[] columns = line.split(DELIMITER);
-        if (columns.length < columnMap.values().stream().max(Integer::compareTo).get()) {
+        int maxIndex = columnMap.values().stream().max(Integer::compareTo).orElse(0);
+        // Use <= because indices are zero-based.
+        if (columns.length <= maxIndex) {
             return null;
         }
 
         try {
-            BoardGame game = new BoardGame(columns[columnMap.get(GameData.NAME)],
-                    Integer.parseInt(columns[columnMap.get(GameData.ID)]),
-                    Integer.parseInt(columns[columnMap.get(GameData.MIN_PLAYERS)]),
-                    Integer.parseInt(columns[columnMap.get(GameData.MAX_PLAYERS)]),
-                    Integer.parseInt(columns[columnMap.get(GameData.MIN_TIME)]),
-                    Integer.parseInt(columns[columnMap.get(GameData.MAX_TIME)]),
-                    Double.parseDouble(columns[columnMap.get(GameData.DIFFICULTY)]),
-                    Integer.parseInt(columns[columnMap.get(GameData.RANK)]),
-                    Double.parseDouble(columns[columnMap.get(GameData.RATING)]),
-                    Integer.parseInt(columns[columnMap.get(GameData.YEAR)]));
-            return game;
+            String name = columns[columnMap.get(GameData.NAME)].trim();
+            int id = Integer.parseInt(columns[columnMap.get(GameData.ID)].trim());
+            int minPlayers = Integer.parseInt(columns[columnMap.get(GameData.MIN_PLAYERS)].trim());
+            int maxPlayers = Integer.parseInt(columns[columnMap.get(GameData.MAX_PLAYERS)].trim());
+            int minTime = Integer.parseInt(columns[columnMap.get(GameData.MIN_TIME)].trim());
+            int maxTime = Integer.parseInt(columns[columnMap.get(GameData.MAX_TIME)].trim());
+            double difficulty = Double.parseDouble(columns[columnMap.get(GameData.DIFFICULTY)].trim());
+            int rank = Integer.parseInt(columns[columnMap.get(GameData.RANK)].trim());
+            double rating = Double.parseDouble(columns[columnMap.get(GameData.RATING)].trim());
+            int year = Integer.parseInt(columns[columnMap.get(GameData.YEAR)].trim());
+            return new BoardGame(name, id, minPlayers, maxPlayers, minTime, maxTime, difficulty, rank, rating, year);
         } catch (NumberFormatException e) {
-            // skip if there is an issue
+            // Skip the line if there's a parsing issue.
             return null;
         }
     }
@@ -118,5 +120,4 @@ public final class GamesLoader {
         }
         return columnMap;
     }
-
 }

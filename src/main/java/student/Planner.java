@@ -79,7 +79,8 @@ public class Planner implements IPlanner {
         // If the condition uses the CONTAINS operator, use a regex to allow spaces around "~="
         if (filter.contains("~=")) {
             operator = Operations.CONTAINS;
-            // Pattern: one or more non-space characters for the column, optional spaces, "~=", optional spaces, then the value.
+            // Pattern: one or more non-space characters for the column,
+            // optional spaces, "~=", optional spaces, then the value.
             Pattern pattern = Pattern.compile("(\\S+)\\s*~=\\s*(.+)");
             Matcher matcher = pattern.matcher(filter);
             if (matcher.matches()) {

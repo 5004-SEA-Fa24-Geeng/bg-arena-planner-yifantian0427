@@ -8,21 +8,24 @@ public final class Filters {
 
         switch (column) {
             case NAME:
-                // For name, use string comparison.
+                //filter the name
                 return filterString(game.getName(), op, value);
-            case MAX_PLAYERS:
-                return filterNum(game.getMaxPlayers(), op, value);
             case MIN_PLAYERS:
-                return filterNum(game.getMinPlayers(), op, value);
+                return filterInt(game.getMinPlayers(), op, value);
+            case MAX_PLAYERS:
+                return filterInt(game.getMaxPlayers(), op, value);
             case MIN_TIME:
-                return filterNum(game.getMinPlayTime(), op, value);
+                return filterInt(game.getMinPlayTime(), op, value);
             case MAX_TIME:
-                return filterNum(game.getMaxPlayTime(), op, value);
+                return filterInt(game.getMaxPlayTime(), op, value);
+            case DIFFICULTY:
+                return filterDouble(game.getDifficulty(), op, value);
+            case RATING:
+                return filterDouble(game.getRating(), op, value);
             case RANK:
-                return filterNum(game.getRank(), op, value);
+                return filterInt(game.getRank(), op, value);
             case YEAR:
-                return filterNum(game.getYearPublished(), op, value);
-            // Add additional cases (e.g., RATING, DIFFICULTY) if needed.
+                return filterInt(game.getYearPublished(), op, value);
             default:
                 return false;
         }
@@ -51,28 +54,69 @@ public final class Filters {
         }
     }
 
-    public static boolean filterNum(int gameData, Operations op, String value) {
-        int parsedValue;
+    /**
+     * Filters numeric integer data based on the specified operation.
+     *
+     * @param gameData the integer data to filter.
+     * @param op the operation to perform.
+     * @param value the value to filter against.
+     * @return true if the integer data matches the filter, false otherwise.
+     */
+    public static boolean filterInt(int gameData, Operations op, String value) {
         try {
-            parsedValue = Integer.parseInt(value.trim());
+            int numValue = Integer.parseInt(value);
+
+            switch (op) {
+                case GREATER_THAN_EQUALS:  // first check >=
+                    return gameData >= numValue;
+                case LESS_THAN_EQUALS:   // first check <=
+                    return gameData <= numValue;
+                case GREATER_THAN:    // then check >
+                    return gameData > numValue;
+                case LESS_THAN:     // then check
+                    return gameData < numValue;
+                case EQUALS:
+                    return gameData == numValue;
+                case NOT_EQUALS:
+                    return gameData != numValue;
+                default:
+                    return false;
+            }
         } catch (NumberFormatException e) {
             return false;
         }
-        switch (op) {
-            case EQUALS:
-                return gameData == parsedValue;
-            case NOT_EQUALS:
-                return gameData != parsedValue;
-            case GREATER_THAN:
-                return gameData > parsedValue;
-            case LESS_THAN:
-                return gameData < parsedValue;
-            case GREATER_THAN_EQUALS:
-                return gameData >= parsedValue;
-            case LESS_THAN_EQUALS:
-                return gameData <= parsedValue;
-            default:
-                return false;
+    }
+
+    /**
+     * Filters double-precision floating point data based on the specified operation.
+     *
+     * @param gameData the double data to filter.
+     * @param op the operation to perform.
+     * @param value the value to filter against.
+     * @return true if the double data matches the filter, false otherwise.
+     */
+    public static boolean filterDouble(double gameData, Operations op, String value) {
+        try {
+            double numValue = Double.parseDouble(value);
+
+            switch (op) {
+                case GREATER_THAN_EQUALS:
+                    return gameData >= numValue;
+                case LESS_THAN_EQUALS:
+                    return gameData <= numValue;
+                case GREATER_THAN:
+                    return gameData > numValue;
+                case LESS_THAN:
+                    return gameData < numValue;
+                case EQUALS:
+                    return gameData == numValue;
+                case NOT_EQUALS:
+                    return gameData != numValue;
+                default:
+                    return false;
+            }
+        } catch (NumberFormatException e) {
+            return false;
         }
     }
 }

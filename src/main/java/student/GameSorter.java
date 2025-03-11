@@ -23,7 +23,8 @@ public final class GameSorter {
         Comparator<BoardGame> comparator;
         switch (sortOn) {
             case NAME:
-                comparator = Comparator.comparing(game -> game.getName().toLowerCase());
+                // Use natural order (case-sensitive)
+                comparator = Comparator.comparing(BoardGame::getName);
                 break;
             case RATING:
                 comparator = Comparator.comparing(BoardGame::getRating);
@@ -50,7 +51,7 @@ public final class GameSorter {
                 comparator = Comparator.comparing(BoardGame::getYearPublished);
                 break;
             default:
-                comparator = Comparator.comparing(game -> game.getName().toLowerCase());
+                comparator = Comparator.comparing(BoardGame::getName);
                 break;
         }
         return ascending ? comparator : comparator.reversed();

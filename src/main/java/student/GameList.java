@@ -28,9 +28,9 @@ public class GameList implements IGameList {
 
     @Override
     public List<String> getGameNames() {
-        // Return game names in case-insensitive ascending order.
+        // Return game names in natural (case-sensitive) ascending order.
         return selectedGames.stream()
-                .sorted(Comparator.comparing(game -> game.getName().toLowerCase()))
+                .sorted(Comparator.comparing(BoardGame::getName))
                 .map(BoardGame::getName)
                 .collect(Collectors.toList());
     }
@@ -134,9 +134,9 @@ public class GameList implements IGameList {
             throw new IllegalArgumentException("Input is empty");
         }
         String input = str.trim();
-        // Get the currently selected games in sorted order.
+        // Get the currently selected games in natural sorted order.
         List<BoardGame> sortedList = selectedGames.stream()
-                .sorted(Comparator.comparing(game -> game.getName().toLowerCase()))
+                .sorted(Comparator.comparing(BoardGame::getName))
                 .collect(Collectors.toList());
 
         // If "all" is specified, clear the list.

@@ -24,9 +24,9 @@ public class Planner implements IPlanner {
      * @param games the set of board games
      */
     public Planner(Set<BoardGame> games) {
-        // Store the full collection in a sorted list (by name, case-insensitive).
+        // Store the full collection in a sorted list (using natural order for names).
         this.originalGames = games.stream()
-                .sorted(Comparator.comparing(game -> game.getName().toLowerCase()))
+                .sorted(Comparator.comparing(BoardGame::getName))
                 .collect(Collectors.toList());
     }
 
@@ -64,7 +64,7 @@ public class Planner implements IPlanner {
     }
 
     /**
-     * Filters games based on a single condition.
+     * Filters games for a single condition.
      *
      * @param filter      the filter condition (e.g., "name~=o")
      * @param filterGames the stream of games to filter
@@ -79,8 +79,7 @@ public class Planner implements IPlanner {
         // If the condition uses the CONTAINS operator, use a regex to allow spaces around "~="
         if (filter.contains("~=")) {
             operator = Operations.CONTAINS;
-            // Pattern: one or more non-space characters for the column,
-            // optional spaces, "~=", optional spaces, then the value.
+            // Pattern: one or more non-space characters for the column, optional spaces, "~=", optional spaces, then the value.
             Pattern pattern = Pattern.compile("(\\S+)\\s*~=\\s*(.+)");
             Matcher matcher = pattern.matcher(filter);
             if (matcher.matches()) {
@@ -107,7 +106,7 @@ public class Planner implements IPlanner {
         } catch (IllegalArgumentException e) {
             return filterGames;
         }
-        // Delegate filtering to the Filters utility.
+        // Delegate the filtering to the Filters utility.
         return filterGames.filter(game -> Filters.filter(game, column, operator, value));
     }
 }

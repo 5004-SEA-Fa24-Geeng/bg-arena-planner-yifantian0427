@@ -1,12 +1,12 @@
 package student;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.Comparator;
 
 public class Planner implements IPlanner {
 
@@ -43,8 +43,8 @@ public class Planner implements IPlanner {
     @Override
     public Stream<BoardGame> filter(String filter, GameData sortOn, boolean ascending) {
         Stream<BoardGame> filteredStream = filter(filter);
-        Comparator<BoardGame> comparator = getComparator(sortOn, ascending);
-        return filteredStream.sorted(comparator);
+        // Delegate sorting to the GameSorter class.
+        return filteredStream.sorted(GameSorter.getComparator(sortOn, ascending));
     }
 
     @Override
@@ -68,7 +68,7 @@ public class Planner implements IPlanner {
         // If the condition uses the CONTAINS operator, use a regex to allow spaces around "~="
         if (filter.contains("~=")) {
             operator = Operations.CONTAINS;
-            // Pattern: one or more non-space characters for the column, optional spaces, "~=", optional spaces, then the rest for value.
+            // Pattern: one or more non-space characters for the column, optional spaces, "~=", optional spaces, then the value.
             Pattern pattern = Pattern.compile("(\\S+)\\s*~=\\s*(.+)");
             Matcher matcher = pattern.matcher(filter);
             if (matcher.matches()) {
@@ -78,7 +78,6 @@ public class Planner implements IPlanner {
                 return filterGames;
             }
         } else {
-            // For all other operators, use the existing approach.
             operator = Operations.getOperatorFromStr(filter);
             if (operator == null) {
                 return filterGames;
@@ -96,47 +95,7 @@ public class Planner implements IPlanner {
         } catch (IllegalArgumentException e) {
             return filterGames;
         }
-        // Delegate to Filters.filter for a case-insensitive comparison.
+        // Delegate the filtering to the Filters utility.
         return filterGames.filter(game -> Filters.filter(game, column, operator, value));
-    }
-
-    private Comparator<BoardGame> getComparator(GameData sortOn, boolean ascending) {
-        Comparator<BoardGame> comparator;
-        switch (sortOn) {
-            case NAME:
-                comparator = Comparator.comparing(game -> game.getName().toLowerCase());
-                break;
-            case RATING:
-                comparator = Comparator.comparing(BoardGame::getRating);
-                break;
-            case DIFFICULTY:
-                comparator = Comparator.comparing(BoardGame::getDifficulty);
-                break;
-            case RANK:
-                comparator = Comparator.comparing(BoardGame::getRank);
-                break;
-            case MIN_PLAYERS:
-                comparator = Comparator.comparing(BoardGame::getMinPlayers);
-                break;
-            case MAX_PLAYERS:
-                comparator = Comparator.comparing(BoardGame::getMaxPlayers);
-                break;
-            case MIN_TIME:
-                comparator = Comparator.comparing(BoardGame::getMinPlayTime);
-                break;
-            case MAX_TIME:
-                comparator = Comparator.comparing(BoardGame::getMaxPlayTime);
-                break;
-            case YEAR:
-                comparator = Comparator.comparing(BoardGame::getYearPublished);
-                break;
-            default:
-                comparator = Comparator.comparing(game -> game.getName().toLowerCase());
-                break;
-        }
-        if (!ascending) {
-            comparator = comparator.reversed();
-        }
-        return comparator;
     }
 }

@@ -25,6 +25,8 @@ public class Planner implements IPlanner {
         if (filter == null || filter.trim().isEmpty()) {
             return base;
         }
+        // Trim the filter string (but do not remove all internal spaces)
+        filter = filter.trim();
         // Apply each condition (separated by commas) to the full set.
         String[] conditions = filter.split(",");
         for (String condition : conditions) {
@@ -53,7 +55,7 @@ public class Planner implements IPlanner {
     /**
      * Filters games for a single condition.
      *
-     * @param filter the filter condition (e.g., "name~=fish")
+     * @param filter the filter condition (e.g., "name~=Fish")
      * @param filterGames the stream of games to filter
      * @return a stream of games matching the condition
      */
@@ -63,20 +65,22 @@ public class Planner implements IPlanner {
         if (operator == null) {
             return filterGames;
         }
-        // Remove spaces.
-        filter = filter.replaceAll(" ", "");
+        // Trim the condition (do not remove internal spaces)
+        filter = filter.trim();
         // Use Pattern.quote to treat the operator literally.
         String[] parts = filter.split(Pattern.quote(operator.getOperator()));
         if (parts.length != 2) {
             return filterGames;
         }
+        // Convert both the column and the value to lower case.
+        String columnStr = parts[0].trim().toLowerCase();
+        String value = parts[1].trim().toLowerCase();
         GameData column;
         try {
-            column = GameData.fromString(parts[0]);
+            column = GameData.fromString(columnStr);
         } catch (IllegalArgumentException e) {
             return filterGames;
         }
-        String value = parts[1].trim();
         return filterGames.filter(game -> Filters.filter(game, column, operator, value));
     }
 

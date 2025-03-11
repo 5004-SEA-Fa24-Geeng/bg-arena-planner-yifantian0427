@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,14 +58,15 @@ public class Planner implements IPlanner {
      * @return a stream of games matching the condition
      */
     private Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filterGames) {
-        // Identify the operator.
+        // Identify the operator using the provided Operations helper.
         Operations operator = Operations.getOperatorFromStr(filter);
         if (operator == null) {
             return filterGames;
         }
         // Remove spaces.
         filter = filter.replaceAll(" ", "");
-        String[] parts = filter.split(operator.getOperator());
+        // Use Pattern.quote to treat the operator literally.
+        String[] parts = filter.split(Pattern.quote(operator.getOperator()));
         if (parts.length != 2) {
             return filterGames;
         }

@@ -1,123 +1,132 @@
 package student;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Sets up filters for the board game data.
- * 
- * This the primary interface for the program. DO NOT MODIFY THIS FILE.
- * 
- * Students, you will need to implement the methods in this interface in a class called
- * Planner.java. You can assume the constructor of Planner.java takes in a Set<BoardGame> as a
- * parameter. This represents the total board game collection.
- * 
- * An important note, while most of methods return streams, each method builds on each other / is
- * progressive. As such if filter by minPlayers, then filter by maxPlayers, the maxPlayers filter
- * should be applied to the results of the minPlayers filter unless reset is called between.
- * 
- */
-public interface IPlanner {
+public class Planner implements IPlanner {
+
+    private final List<BoardGame> originalGames;
+
+    public Planner(Set<BoardGame> games) {
+        // Store the full collection in a sorted list (by name, case-insensitive).
+        this.originalGames = games.stream()
+                .sorted(Comparator.comparing(game -> game.getName().toLowerCase()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Stream<BoardGame> filter(String filter) {
+        Stream<BoardGame> base = originalGames.stream();
+        if (filter == null || filter.trim().isEmpty()) {
+            return base;
+        }
+        // Trim the filter string
+        filter = filter.trim();
+        // Apply each condition (separated by commas) to the full set.
+        String[] conditions = filter.split(",");
+        for (String condition : conditions) {
+            base = filterSingle(condition, base);
+        }
+        return base;
+    }
+
+    @Override
+    public Stream<BoardGame> filter(String filter, GameData sortOn) {
+        return filter(filter, sortOn, true);
+    }
+
+    @Override
+    public Stream<BoardGame> filter(String filter, GameData sortOn, boolean ascending) {
+        Stream<BoardGame> filteredStream = filter(filter);
+        Comparator<BoardGame> comparator = getComparator(sortOn, ascending);
+        return filteredStream.sorted(comparator);
+    }
+
+    @Override
+    public void reset() {
+        // No progressive filtering state is maintained.
+    }
 
     /**
-     * 
-     * Assumes the results are sorted in ascending order, and that the steam is sorted by the name
-     * of the board game (GameData.NAME).
-     * 
-     * @param filter The filter to apply to the board games.
-     * @return A stream of board games that match the filter.
-     * @see #filter(String, GameData, boolean)
+     * Filters games for a single condition.
+     *
+     * @param filter the filter condition (e.g., "name~=a")
+     * @param filterGames the stream of games to filter
+     * @return a stream of games matching the condition
      */
-    Stream<BoardGame> filter(String filter);
+    private Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filterGames) {
+        // Force CONTAINS operator if the filter contains "~="
+        Operations operator;
+        if (filter.contains("~=")) {
+            operator = Operations.CONTAINS;
+        } else {
+            operator = Operations.getOperatorFromStr(filter);
+        }
+        if (operator == null) {
+            return filterGames;
+        }
+        // Trim the condition.
+        filter = filter.trim();
+        // Use Pattern.quote to treat the operator literally.
+        String[] parts = filter.split(Pattern.quote(operator.getOperator()));
+        if (parts.length != 2) {
+            return filterGames;
+        }
+        // Convert the column part to lower case (for lookup) but leave value as-is.
+        String columnStr = parts[0].trim().toLowerCase();
+        String value = parts[1].trim();
+        GameData column;
+        try {
+            column = GameData.fromString(columnStr);
+        } catch (IllegalArgumentException e) {
+            return filterGames;
+        }
+        // Let Filters.filter perform a case-insensitive comparison.
+        return filterGames.filter(game -> Filters.filter(game, column, operator, value));
+    }
 
-    /**
-     * Filters the board games by the passed in text filter. Assumes the results are sorted in
-     * ascending order.
-     * 
-     * @param filter The filter to apply to the board games.
-     * @param sortOn The column to sort the results on.
-     * @return A stream of board games that match the filter.
-     * @see #filter(String, GameData, boolean)
-     */
-    Stream<BoardGame> filter(String filter, GameData sortOn);
-
-    /**
-     * Filters the board games by the passed in text filter.
-     * 
-     * 
-     * A text filter can contain the following options:
-     * 
-     * > : greater than
-     * 
-     * < : less than
-     * 
-     * >= : greater than or equal to
-     * 
-     * <= : less than or equal to
-     * 
-     * == : equal to
-     * 
-     * != : not equal to
-     * 
-     * ~= : contains the text
-     * 
-     * The left side of the filter describes the column to filter on. The right side of the filter
-     * describes the value to filter on.
-     * 
-     * Fo example:
-     * 
-     * minPlayers>4
-     * 
-     * would filter the board games to only those with a minimum number of players greater than 4.
-     * 
-     * Commas between filters are treated as ANDs. For example:
-     * 
-     * minPlayers>4,maxPlayers<6
-     * 
-     * It is possible to filter on the same column multiple times. For example:
-     * 
-     * minPlayers>4,minPlayers<6
-     * 
-     * This would filter the board games to only those with a minimum number of players greater than
-     * 4 and less than 6.
-     * 
-     * Spaces should be ignored, but can be included for readability. For example:
-     * 
-     * minPlayers > 4
-     * 
-     * is the same as
-     * 
-     * minPlayers>4
-     * 
-     * 
-     * If filtering on a string column, the filter should be case insensitive. For example:
-     * 
-     * name~=pandemic
-     * 
-     * would filter the board games to only those with the word "pandemic" in the name, but could
-     * also have Pandemic or PANDEMIC.
-     * 
-     * Column names will match the values in GameData. As such is it possible to use
-     * 
-     * GameData.MIN_PLAYERS.getColumnName() or GameData.fromString("minplayers") to get the column
-     * name for the minPlayers column.
-     * 
-     * Note: id is a special column that is not used for filtering or sorting.
-     * 
-     * if the filter is empty (""), then the results should return the current filter sorted based
-     * on the sortOn column and in the defined direction.
-     * 
-     * 
-     * 
-     * @param filter The filter to apply to the board games.
-     * @param sortOn The column to sort the results on.
-     * @param ascending Whether to sort the results in ascending order or descending order.
-     * @return A stream of board games that match the filter.
-     */
-    Stream<BoardGame> filter(String filter, GameData sortOn, boolean ascending);
-
-    /**
-     * Resets the collection to have no filters applied.
-     */
-    void reset();
-
+    private Comparator<BoardGame> getComparator(GameData sortOn, boolean ascending) {
+        Comparator<BoardGame> comparator;
+        switch (sortOn) {
+            case NAME:
+                comparator = Comparator.comparing(game -> game.getName().toLowerCase());
+                break;
+            case RATING:
+                comparator = Comparator.comparing(BoardGame::getRating);
+                break;
+            case DIFFICULTY:
+                comparator = Comparator.comparing(BoardGame::getDifficulty);
+                break;
+            case RANK:
+                comparator = Comparator.comparing(BoardGame::getRank);
+                break;
+            case MIN_PLAYERS:
+                comparator = Comparator.comparing(BoardGame::getMinPlayers);
+                break;
+            case MAX_PLAYERS:
+                comparator = Comparator.comparing(BoardGame::getMaxPlayers);
+                break;
+            case MIN_TIME:
+                comparator = Comparator.comparing(BoardGame::getMinPlayTime);
+                break;
+            case MAX_TIME:
+                comparator = Comparator.comparing(BoardGame::getMaxPlayTime);
+                break;
+            case YEAR:
+                comparator = Comparator.comparing(BoardGame::getYearPublished);
+                break;
+            default:
+                comparator = Comparator.comparing(game -> game.getName().toLowerCase());
+                break;
+        }
+        if (!ascending) {
+            comparator = comparator.reversed();
+        }
+        return comparator;
+    }
 }

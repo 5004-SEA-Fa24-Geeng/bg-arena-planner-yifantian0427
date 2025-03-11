@@ -24,8 +24,7 @@ public final class GamesLoader {
     private static final String DELIMITER = ",";
 
     /** private constructor to prevent instantiation. */
-    private GamesLoader() {
-    }
+    private GamesLoader() { }
 
     /**
      * Loads the games from the csv file into a set of BoardGame objects.
@@ -34,12 +33,10 @@ public final class GamesLoader {
      * @return a set of BoardGame objects
      */
     public static Set<BoardGame> loadGamesFile(String filename) {
-
         Set<BoardGame> games = new HashSet<>();
-
         List<String> lines;
         try {
-            // this is so we can store the files in the resources folder
+            // Load the file from the resources folder.
             InputStream is = GamesLoader.class.getResourceAsStream(filename);
             InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(isr);
@@ -51,32 +48,30 @@ public final class GamesLoader {
         if (lines == null || lines.isEmpty()) {
             return games;
         }
-
         Map<GameData, Integer> columnMap = processHeader(lines.remove(0));
-
         games = lines.stream()
                 .map(line -> toBoardGame(line, columnMap))
                 .filter(game -> game != null)
                 .collect(Collectors.toSet());
-
         return games;
     }
 
     /**
      * Converts a line from the csv file into a BoardGame object.
      *
-     * @param line      the line to convert
+     * @param line the line to convert
      * @param columnMap the map of columns to index
      * @return a BoardGame object, or null if conversion fails
      */
     private static BoardGame toBoardGame(String line, Map<GameData, Integer> columnMap) {
+        // Remove any quotation marks and then split.
+        line = line.replaceAll("\"", "");
         String[] columns = line.split(DELIMITER);
         int maxIndex = columnMap.values().stream().max(Integer::compareTo).orElse(0);
-        // Because indices are 0-based, if columns.length is less than or equal to maxIndex, data is missing.
+        // Check if we have enough columns.
         if (columns.length <= maxIndex) {
             return null;
         }
-
         try {
             String name = columns[columnMap.get(GameData.NAME)].trim();
             int id = Integer.parseInt(columns[columnMap.get(GameData.ID)].trim());
@@ -99,24 +94,25 @@ public final class GamesLoader {
      * Processes the header line to determine the column mapping.
      *
      * It is common to do this for csv files as the columns can be in any order.
-     * This makes it order independent by taking a moment to link the columns
-     * with their actual index in the file.
+     * This makes it order independent by taking a moment to link the columns with
+     * their actual index in the file.
      *
      * @param header the header line
      * @return a map of column to index
      */
     private static Map<GameData, Integer> processHeader(String header) {
+        // Remove any quotation marks from the header.
+        header = header.replaceAll("\"", "");
         Map<GameData, Integer> columnMap = new HashMap<>();
         String[] columns = header.split(DELIMITER);
         for (int i = 0; i < columns.length; i++) {
-            // Trim each token and convert to lower case.
             String token = columns[i].trim().toLowerCase();
             try {
-                // Use fromString so it can match either the enum name or its CSV token.
+                // Use fromString so it matches either the CSV token or the enum name.
                 GameData col = GameData.fromString(token);
                 columnMap.put(col, i);
             } catch (IllegalArgumentException e) {
-                // Ignoring columns that don't match.
+                // Ignore columns that don't match.
             }
         }
         return columnMap;

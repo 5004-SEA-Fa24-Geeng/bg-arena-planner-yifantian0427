@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,21 +59,24 @@ public class Planner implements IPlanner {
      * @return a stream of games matching the condition
      */
     private Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filterGames) {
-        // Identify the operator using the Operations helper.
-        Operations operator = Operations.getOperatorFromStr(filter);
+        // Force CONTAINS operator if the filter contains "~="
+        Operations operator;
+        if (filter.contains("~=")) {
+            operator = Operations.CONTAINS;
+        } else {
+            operator = Operations.getOperatorFromStr(filter);
+        }
         if (operator == null) {
             return filterGames;
         }
-        // Trim the condition.
         filter = filter.trim();
-        // Use Pattern.quote to treat the operator literally.
-        String[] parts = filter.split(Pattern.quote(operator.getOperator()));
-        if (parts.length != 2) {
+        // Use indexOf and substring to reliably extract parts.
+        int opIndex = filter.indexOf(operator.getOperator());
+        if (opIndex < 0) {
             return filterGames;
         }
-        // Convert the column part to lower case (for lookup) but leave value as-is.
-        String columnStr = parts[0].trim().toLowerCase();
-        String value = parts[1].trim();
+        String columnStr = filter.substring(0, opIndex).trim().toLowerCase();
+        String value = filter.substring(opIndex + operator.getOperator().length()).trim();
         GameData column;
         try {
             column = GameData.fromString(columnStr);

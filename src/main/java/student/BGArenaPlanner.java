@@ -6,7 +6,7 @@ package student;
  */
 public final class BGArenaPlanner {
     /** default location of collection - relative to the resources directory. */
-    private static final String DEFAULT_COLLECTION = "/collection.csv";
+    private static final String DEFAULT_COLLECTION = "collection.csv";
 
     /** private constructor as static class. */
     private BGArenaPlanner() {
@@ -15,7 +15,7 @@ public final class BGArenaPlanner {
 
     /**
      * Main entry point for the program.
-     * 
+     *
      * @param args command line arguments - not used at this time.
      */
     public static void main(String[] args) {

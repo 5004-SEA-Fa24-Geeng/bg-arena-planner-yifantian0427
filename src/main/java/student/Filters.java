@@ -8,6 +8,7 @@ public final class Filters {
 
         switch (column) {
             case NAME:
+                // For name, use string comparison.
                 return filterString(game.getName(), op, value);
             case MAX_PLAYERS:
                 return filterNum(game.getMaxPlayers(), op, value);
@@ -21,14 +22,13 @@ public final class Filters {
                 return filterNum(game.getRank(), op, value);
             case YEAR:
                 return filterNum(game.getYearPublished(), op, value);
-            // Extend with additional cases if needed.
+            // Add additional cases (e.g., RATING, DIFFICULTY) if needed.
             default:
                 return false;
         }
     }
 
     public static boolean filterString(String gameData, Operations op, String value) {
-        // Trim both strings before comparing.
         String trimmedData = gameData.trim();
         String trimmedValue = value.trim();
         switch (op) {
@@ -38,6 +38,14 @@ public final class Filters {
                 return !trimmedData.equalsIgnoreCase(trimmedValue);
             case CONTAINS:
                 return trimmedData.toLowerCase().contains(trimmedValue.toLowerCase());
+            case GREATER_THAN:
+                return trimmedData.compareToIgnoreCase(trimmedValue) > 0;
+            case LESS_THAN:
+                return trimmedData.compareToIgnoreCase(trimmedValue) < 0;
+            case GREATER_THAN_EQUALS:
+                return trimmedData.compareToIgnoreCase(trimmedValue) >= 0;
+            case LESS_THAN_EQUALS:
+                return trimmedData.compareToIgnoreCase(trimmedValue) <= 0;
             default:
                 return false;
         }

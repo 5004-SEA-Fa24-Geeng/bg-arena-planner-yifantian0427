@@ -90,7 +90,7 @@ public final class GamesLoader {
             int year = Integer.parseInt(columns[columnMap.get(GameData.YEAR)].trim());
             return new BoardGame(name, id, minPlayers, maxPlayers, minTime, maxTime, difficulty, rank, rating, year);
         } catch (NumberFormatException e) {
-            // skip the line if there's a parsing issue.
+            // Skip the line if there's a parsing issue.
             return null;
         }
     }
@@ -109,10 +109,11 @@ public final class GamesLoader {
         Map<GameData, Integer> columnMap = new HashMap<>();
         String[] columns = header.split(DELIMITER);
         for (int i = 0; i < columns.length; i++) {
-            // Trim and convert each token to lower case.
+            // Trim each token and convert to lower case.
             String token = columns[i].trim().toLowerCase();
             try {
-                GameData col = GameData.fromColumnName(token);
+                // Use fromString so it can match either the enum name or its CSV token.
+                GameData col = GameData.fromString(token);
                 columnMap.put(col, i);
             } catch (IllegalArgumentException e) {
                 // Ignoring columns that don't match.

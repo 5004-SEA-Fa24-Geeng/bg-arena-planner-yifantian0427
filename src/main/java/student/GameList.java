@@ -43,14 +43,22 @@ public class GameList implements IGameList {
     @Override
     public void saveGame(String filename) {
         List<String> names = getGameNames();
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
-            for (String name : names) {
-                writer.println(name);
+        try {
+            java.io.File file = new java.io.File(filename);
+            java.io.File parent = file.getParentFile();
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs();
+            }
+            try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(file))) {
+                for (String name : names) {
+                    writer.println(name);
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException("Error saving file: " + e.getMessage(), e);
         }
     }
+
 
     @Override
     public void addToList(String str, Stream<BoardGame> filtered) throws IllegalArgumentException {

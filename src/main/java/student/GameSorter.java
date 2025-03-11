@@ -7,15 +7,17 @@ import java.util.Comparator;
  */
 public final class GameSorter {
 
-    // Private constructor prevents instantiation.
-    private GameSorter() {}
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private GameSorter() { }
 
     /**
      * Returns a comparator for BoardGame objects based on the specified column and order.
      *
-     * @param sortOn the GameData column to sort on.
-     * @param ascending true for ascending order; false for descending.
-     * @return a Comparator for BoardGame.
+     * @param sortOn    the GameData column to sort on
+     * @param ascending true for ascending order; false for descending
+     * @return a Comparator for BoardGame objects
      */
     public static Comparator<BoardGame> getComparator(GameData sortOn, boolean ascending) {
         Comparator<BoardGame> comparator;

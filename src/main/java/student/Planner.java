@@ -8,10 +8,21 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.Comparator;
 
+/**
+ * Implementation of the IPlanner interface.
+ *
+ * This class filters and sorts a collection of BoardGame objects based on user-specified conditions.
+ */
 public class Planner implements IPlanner {
 
+    /** The complete list of board games in sorted order. */
     private final List<BoardGame> originalGames;
 
+    /**
+     * Constructs a Planner with the specified set of games.
+     *
+     * @param games the set of board games
+     */
     public Planner(Set<BoardGame> games) {
         // Store the full collection in a sorted list (by name, case-insensitive).
         this.originalGames = games.stream()
@@ -53,9 +64,9 @@ public class Planner implements IPlanner {
     }
 
     /**
-     * Filters games for a single condition.
+     * Filters games based on a single condition.
      *
-     * @param filter the filter condition (e.g., "name~=o")
+     * @param filter      the filter condition (e.g., "name~=o")
      * @param filterGames the stream of games to filter
      * @return a stream of games matching the condition
      */
@@ -95,7 +106,7 @@ public class Planner implements IPlanner {
         } catch (IllegalArgumentException e) {
             return filterGames;
         }
-        // Delegate the filtering to the Filters utility.
+        // Delegate filtering to the Filters utility.
         return filterGames.filter(game -> Filters.filter(game, column, operator, value));
     }
 }

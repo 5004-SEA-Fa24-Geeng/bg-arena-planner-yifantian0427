@@ -1,21 +1,26 @@
 package student;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Implementation of the IGameList interface.
+ *
+ * This class manages the selected board games.
+ */
 public class GameList implements IGameList {
 
-    // Internal storage for selected games.
+    /** Internal storage for selected games. */
     private final List<BoardGame> selectedGames;
 
     /**
-     * Constructor for the GameList.
+     * Constructs a new GameList.
      */
     public GameList() {
         this.selectedGames = new ArrayList<>();
@@ -44,14 +49,14 @@ public class GameList implements IGameList {
     public void saveGame(String filename) {
         List<String> names = getGameNames();
         try {
-            java.io.File file = new java.io.File(filename);
-            java.io.File parent = file.getParentFile();
+            File file = new File(filename);
+            File parent = file.getParentFile();
             if (parent != null && !parent.exists()) {
                 parent.mkdirs();
             }
-            try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(file))) {
+            try (FileWriter writer = new FileWriter(file)) {
                 for (String name : names) {
-                    writer.println(name);
+                    writer.write(name + System.lineSeparator());
                 }
             }
         } catch (IOException e) {
@@ -59,9 +64,9 @@ public class GameList implements IGameList {
         }
     }
 
-
     @Override
-    public void addToList(String str, Stream<BoardGame> filtered) throws IllegalArgumentException {
+    public void addToList(String str, Stream<BoardGame> filtered)
+            throws IllegalArgumentException {
         if (str == null || str.trim().isEmpty()) {
             throw new IllegalArgumentException("Input is empty");
         }
@@ -76,7 +81,7 @@ public class GameList implements IGameList {
             return;
         }
 
-        // If a range is specified (e.g., "1-5")
+        // If a range is specified (e.g., "1-5").
         if (input.contains("-")) {
             String[] parts = input.split("-");
             if (parts.length != 2) {
@@ -97,7 +102,7 @@ public class GameList implements IGameList {
             return;
         }
 
-        // If input is a single number (e.g., "1")
+        // If input is a single number (e.g., "1").
         try {
             int index = Integer.parseInt(input);
             if (index < 1 || index > filteredList.size()) {
@@ -187,7 +192,11 @@ public class GameList implements IGameList {
         }
     }
 
-    // Helper method to add a game if it isn't already in the list.
+    /**
+     * Helper method to add a game if it is not already in the list.
+     *
+     * @param game the board game to add
+     */
     private void addGame(BoardGame game) {
         if (!selectedGames.contains(game)) {
             selectedGames.add(game);

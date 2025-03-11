@@ -1,14 +1,28 @@
 package student;
 
+/**
+ * Utility class that provides filtering methods for BoardGame objects.
+ */
 public final class Filters {
-    private Filters() {}
 
-    public static boolean filter(BoardGame game, GameData column,
-                                 Operations op, String value) {
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private Filters() { }
 
+    /**
+     * Filters the given BoardGame based on the specified column, operator, and value.
+     *
+     * @param game   the board game to filter
+     * @param column the GameData column to filter on
+     * @param op     the operation to perform
+     * @param value  the value to compare against
+     * @return true if the game matches the filter criteria, false otherwise
+     */
+    public static boolean filter(BoardGame game, GameData column, Operations op, String value) {
         switch (column) {
             case NAME:
-                //filter the name
+                // Filter the name.
                 return filterString(game.getName(), op, value);
             case MIN_PLAYERS:
                 return filterInt(game.getMinPlayers(), op, value);
@@ -31,6 +45,14 @@ public final class Filters {
         }
     }
 
+    /**
+     * Filters a string value based on the given operator and value.
+     *
+     * @param gameData the game data as a String
+     * @param op       the operation to perform
+     * @param value    the value to compare against
+     * @return true if the filter criteria is met, false otherwise
+     */
     public static boolean filterString(String gameData, Operations op, String value) {
         String trimmedData = gameData.trim();
         String trimmedValue = value.trim();
@@ -55,25 +77,24 @@ public final class Filters {
     }
 
     /**
-     * Filters numeric integer data based on the specified operation.
+     * Filters integer data based on the specified operation.
      *
-     * @param gameData the integer data to filter.
-     * @param op the operation to perform.
-     * @param value the value to filter against.
-     * @return true if the integer data matches the filter, false otherwise.
+     * @param gameData the integer data to filter
+     * @param op       the operation to perform
+     * @param value    the value to compare against
+     * @return true if the integer data matches the filter, false otherwise
      */
     public static boolean filterInt(int gameData, Operations op, String value) {
         try {
             int numValue = Integer.parseInt(value);
-
             switch (op) {
-                case GREATER_THAN_EQUALS:  // first check >=
+                case GREATER_THAN_EQUALS:  // Check >= first.
                     return gameData >= numValue;
-                case LESS_THAN_EQUALS:   // first check <=
+                case LESS_THAN_EQUALS:     // Check <= first.
                     return gameData <= numValue;
-                case GREATER_THAN:    // then check >
+                case GREATER_THAN:         // Then check >.
                     return gameData > numValue;
-                case LESS_THAN:     // then check
+                case LESS_THAN:            // Then check <.
                     return gameData < numValue;
                 case EQUALS:
                     return gameData == numValue;
@@ -88,17 +109,16 @@ public final class Filters {
     }
 
     /**
-     * Filters double-precision floating point data based on the specified operation.
+     * Filters double data based on the specified operation.
      *
-     * @param gameData the double data to filter.
-     * @param op the operation to perform.
-     * @param value the value to filter against.
-     * @return true if the double data matches the filter, false otherwise.
+     * @param gameData the double data to filter
+     * @param op       the operation to perform
+     * @param value    the value to compare against
+     * @return true if the double data matches the filter, false otherwise
      */
     public static boolean filterDouble(double gameData, Operations op, String value) {
         try {
             double numValue = Double.parseDouble(value);
-
             switch (op) {
                 case GREATER_THAN_EQUALS:
                     return gameData >= numValue;

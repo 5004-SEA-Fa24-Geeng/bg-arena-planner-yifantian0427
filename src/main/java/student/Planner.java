@@ -1,128 +1,119 @@
 package student;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Planner implements IPlanner {
 
-    private final List<BoardGame> originalGames;
-    // currentFiltered is maintained for reset() but not used for filtering if a filter is provided.
-    private List<BoardGame> currentFiltered;
+    /** hold the original board games. */
+    private final Set<BoardGame> originalGames;
 
+    /**
+     * Constructor for Planner.
+     * @param games the board games.
+     */
     public Planner(Set<BoardGame> games) {
-        // Store the full collection in a sorted list (by name, case-insensitive).
-        this.originalGames = games.stream()
-                .sorted(Comparator.comparing(game -> game.getName().toLowerCase()))
-                .collect(Collectors.toList());
-        // Initially, the filtered list includes all games.
-        this.currentFiltered = new ArrayList<>(this.originalGames);
+        this.originalGames = new LinkedHashSet<>(games);
     }
 
+    /**
+     * Filters board games based on the string filter.
+     * The result stream is sorted by the name of the board game in ascending order.
+     * @param filter the filter to apply to the board games.
+     * @return a stream of board games that match the filter.
+     */
     @Override
     public Stream<BoardGame> filter(String filter) {
+        // Always start filtering from the full originalGames set.
+        Stream<BoardGame> base = originalGames.stream();
         if (filter == null || filter.trim().isEmpty()) {
-            // If filter is empty, return the full collection, sorted by name.
-            return originalGames.stream()
-                    .sorted(Comparator.comparing(game -> game.getName().toLowerCase()));
+            return Sorting.sortOn(base, GameData.NAME, true);
         }
-        // Always start from the full collection.
-        List<BoardGame> result = originalGames;
-        // Support multiple conditions separated by commas.
         String[] conditions = filter.split(",");
         for (String condition : conditions) {
-            result = filterSingle(condition, result.stream())
-                    .collect(Collectors.toList());
+            base = filterSingle(condition, base);
         }
-        // Return the result sorted by game name (case-insensitive)
-        return result.stream()
-                .sorted(Comparator.comparing(game -> game.getName().toLowerCase()));
+        return Sorting.sortOn(base, GameData.NAME, true);
     }
 
-
-    private Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filteredGames) {
-        // Identify the operator using the provided Operations helper.
-        Operations operator = Operations.getOperatorFromStr(filter);
-        if (operator == null) {
-            return filteredGames;
-        }
-        // Remove spaces.
-        filter = filter.replaceAll(" ", "");
-        String[] parts = filter.split(operator.getOperator());
-        if (parts.length != 2) {
-            return filteredGames;
-        }
-        GameData column;
-        try {
-            column = GameData.fromString(parts[0]);
-        } catch (IllegalArgumentException e) {
-            return filteredGames;
-        }
-        String value = parts[1].trim();
-        List<BoardGame> filteredGameList = filteredGames
-                .filter(game -> Filters.filter(game, column, operator, value))
-                .collect(Collectors.toList());
-        return filteredGameList.stream();
-    }
-
+    /**
+     * Filters board games based on the string filter,
+     * and sorts the stream of board games based on the specific column.
+     * @param filter the filter to apply to the board games.
+     * @param sortOn the column to sort the results on.
+     * @return a stream of board games that match the filter.
+     */
     @Override
     public Stream<BoardGame> filter(String filter, GameData sortOn) {
         return filter(filter, sortOn, true);
     }
 
+    /**
+     * Filters board games based on the string filter,
+     * and sorts the stream of board games based on the specific column in the specified order.
+     * @param filter the filter to apply to the board games.
+     * @param sortOn the column to sort the results on.
+     * @param ascending whether to sort the results in ascending or descending order.
+     * @return a stream of board games that match the filter.
+     */
     @Override
     public Stream<BoardGame> filter(String filter, GameData sortOn, boolean ascending) {
-        Stream<BoardGame> filteredStream = filter(filter);
-        Comparator<BoardGame> comparator = getComparator(sortOn, ascending);
-        return filteredStream.sorted(comparator);
+        // Always start from the full collection.
+        Stream<BoardGame> base = originalGames.stream();
+        if (filter != null && !filter.trim().isEmpty()) {
+            String[] conditions = filter.split(",");
+            for (String condition : conditions) {
+                base = filterSingle(condition, base);
+            }
+        }
+        return Sorting.sortOn(base, sortOn, ascending);
     }
 
+    /**
+     * Filters games when the filter string contains only one filter condition.
+     * @param filter the filter string used for filtering.
+     * @param filterGames the stream of board games to be filtered.
+     * @return a stream of board games that match the filter condition.
+     * @throws IllegalArgumentException if the condition is invalid.
+     */
+    private Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filterGames)
+            throws IllegalArgumentException {
+        Operations operator = Operations.getOperatorFromStr(filter);
+        if (operator == null) {
+            throw new IllegalArgumentException("Invalid condition.");
+        }
+        // Remove all spaces.
+        filter = filter.replaceAll(" ", "");
+        String[] parts = filter.split(operator.getOperator());
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Invalid condition.");
+        }
+        GameData column;
+        try {
+            column = GameData.fromString(parts[0]);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid condition.");
+        }
+        String value = parts[1];
+        // For numeric columns, ensure the value is a number.
+        if (column != GameData.NAME) {
+            try {
+                Integer.parseInt(value);
+            } catch(NumberFormatException e) {
+                throw new IllegalArgumentException("Contains non-numeric values.");
+            }
+        }
+        return filterGames.filter(game -> Filters.filter(game, column, operator, value));
+    }
+
+    /**
+     * Since filtering is done fresh from the original set every time,
+     * reset() does not need to modify any internal state.
+     */
     @Override
     public void reset() {
-        // Reset the current filtered list to the full collection.
-        currentFiltered = new ArrayList<>(originalGames);
-    }
-
-    private Comparator<BoardGame> getComparator(GameData sortOn, boolean ascending) {
-        Comparator<BoardGame> comparator;
-        switch (sortOn) {
-            case NAME:
-                comparator = Comparator.comparing(game -> game.getName().toLowerCase());
-                break;
-            case RATING:
-                comparator = Comparator.comparing(BoardGame::getRating);
-                break;
-            case DIFFICULTY:
-                comparator = Comparator.comparing(BoardGame::getDifficulty);
-                break;
-            case RANK:
-                comparator = Comparator.comparing(BoardGame::getRank);
-                break;
-            case MIN_PLAYERS:
-                comparator = Comparator.comparing(BoardGame::getMinPlayers);
-                break;
-            case MAX_PLAYERS:
-                comparator = Comparator.comparing(BoardGame::getMaxPlayers);
-                break;
-            case MIN_TIME:
-                comparator = Comparator.comparing(BoardGame::getMinPlayTime);
-                break;
-            case MAX_TIME:
-                comparator = Comparator.comparing(BoardGame::getMaxPlayTime);
-                break;
-            case YEAR:
-                comparator = Comparator.comparing(BoardGame::getYearPublished);
-                break;
-            default:
-                comparator = Comparator.comparing(game -> game.getName().toLowerCase());
-                break;
-        }
-        if (!ascending) {
-            comparator = comparator.reversed();
-        }
-        return comparator;
+        // No progressive state maintained.
     }
 }

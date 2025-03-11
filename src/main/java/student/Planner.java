@@ -24,9 +24,9 @@ public class Planner implements IPlanner {
      * @param games the set of board games
      */
     public Planner(Set<BoardGame> games) {
-        // Store the full collection in a sorted list (using natural order for names).
+        // Store the full collection in a sorted list using case-insensitive order for names.
         this.originalGames = games.stream()
-                .sorted(Comparator.comparing(BoardGame::getName))
+                .sorted(Comparator.comparing(BoardGame::getName, String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList());
     }
 

@@ -196,7 +196,130 @@ For the final design, you just need to do a single diagram that includes both th
 > [!WARNING]
 > If you resubmit your assignment for manual grading, this is a section that often needs updating. You should double check with every resubmit to make sure it is up to date.
 
+```mermaid
+classDiagram
+    class BoardGame {
+        - String name
+        - int id
+        - int minPlayers
+        - int maxPlayers
+        - int minPlayTime
+        - int maxPlayTime
+        - double difficulty
+        - int rank
+        - double rating
+        - int yearPublished
+        + String getName()
+        + int getId()
+        + int getMinPlayers()
+        + int getMaxPlayers()
+        + int getMinPlayTime()
+        + int getMaxPlayTime()
+        + double getDifficulty()
+        + int getRank()
+        + double getRating()
+        + int getYearPublished()
+    }
 
+    class IPlanner {
+        + Stream<BoardGame> filter(String filter)
+        + Stream<BoardGame> filter(String filter, GameData sortOn)
+        + Stream<BoardGame> filter(String filter, GameData sortOn, boolean ascending)
+        + void reset()
+    }
+
+    class Planner {
+        - List<BoardGame> originalGames
+        + Planner(Set<BoardGame> games)
+        + Stream<BoardGame> filter(String filter)
+        + Stream<BoardGame> filter(String filter, GameData sortOn)
+        + Stream<BoardGame> filter(String filter, GameData sortOn, boolean ascending)
+        + void reset()
+        - Stream<BoardGame> filterSingle(String filter, Stream<BoardGame> filterGames)
+    }
+
+    class GameData {
+        <<enumeration>>
+        NAME
+        RATING
+        DIFFICULTY
+        RANK
+        MIN_PLAYERS
+        MAX_PLAYERS
+        MIN_TIME
+        MAX_TIME
+        YEAR
+    }
+
+    class GameSorter {
+        + static Comparator<BoardGame> getComparator(GameData sortOn, boolean ascending)
+    }
+
+    class IGameList {
+        + List<String> getGameNames()
+        + void clear()
+        + int count()
+        + void saveGame(String filename)
+        + void addToList(String str, Stream<BoardGame> filtered)
+        + void removeFromList(String str)
+    }
+
+    class GameList {
+        - List<BoardGame> selectedGames
+        + GameList()
+        + List<String> getGameNames()
+        + void clear()
+        + int count()
+        + void saveGame(String filename)
+        + void addToList(String str, Stream<BoardGame> filtered)
+        + void removeFromList(String str)
+    }
+
+    class Operations {
+        <<enumeration>>
+        EQUALS
+        NOT_EQUALS
+        GREATER_THAN
+        LESS_THAN
+        GREATER_THAN_EQUALS
+        LESS_THAN_EQUALS
+        CONTAINS
+    }
+
+    class Filters {
+        + static boolean filter(BoardGame game, GameData column, Operations op, String value)
+        + static boolean filterString(String gameData, Operations op, String value)
+        + static boolean filterInt(int gameData, Operations op, String value)
+        + static boolean filterDouble(double gameData, Operations op, String value)
+    }
+
+    class GamesLoader {
+        + static Set<BoardGame> loadGames(String filename)
+    }
+
+    class ConsoleApp {
+        + static void main(String[] args)
+    }
+
+    class BGArenaPlanner {
+        + static void main(String[] args)
+    }
+
+    Planner --|> IPlanner
+    GameList --|> IGameList
+    GameSorter ..> BoardGame
+    Planner ..> GameSorter
+    Planner ..> Filters
+    Filters ..> BoardGame
+    Filters ..> GameData
+    Filters ..> Operations
+    GameSorter ..> GameData
+    GamesLoader ..> BoardGame
+    ConsoleApp ..> Planner
+    ConsoleApp ..> GameList
+    BGArenaPlanner ..> Planner
+
+```
 
 
 
@@ -206,3 +329,9 @@ For the final design, you just need to do a single diagram that includes both th
 > The value of reflective writing has been highly researched and documented within computer science, from learning to information to showing higher salaries in the workplace. For this next part, we encourage you to take time, and truly focus on your retrospective.
 
 Take time to reflect on how your design has changed. Write in *prose* (i.e. do not bullet point your answers - it matters in how our brain processes the information). Make sure to include what were some major changes, and why you made them. What did you learn from this process? What would you do differently next time? What was the most challenging part of this process? For most students, it will be a paragraph or two. 
+
+Throughout the design and refinement of the BG Arena Planner, several important changes shaped the final structure of the system. Initially, the architecture lacked clear separation of concerns, which made it more difficult to maintain and extend. As we progressed, one of the most significant shifts was the introduction of interfaces such as IGameList and IPlanner, ensuring flexibility and making it easier to substitute different implementations if needed. This abstraction allowed ConsoleApp to interact with GameList and Planner without being tightly coupled to their specific implementations. Another major change was refining the filtering and sorting mechanisms. The Planner class evolved to rely on explicit sorting strategies through GameSorter, ensuring consistent ordering, particularly when dealing with case-insensitive name comparisons.
+
+One of the most valuable lessons from this process was the importance of structuring data and logic to align with real-world use cases. Early on, some filtering logic was mixed with data management, which created unnecessary complexity. By isolating responsibilities—such as moving filtering logic into Filters and sorting logic into GameSorter—the design became more modular and easier to test. The experience also reinforced the necessity of precise test-driven development. Small inconsistencies in sorting, such as the ordering of "golang" versus "GoRami," highlighted the importance of understanding how string comparisons behave in different contexts. If I were to start over, I would prioritize writing comprehensive tests earlier in the design phase, ensuring that key behaviors are validated from the beginning rather than adjusted later.
+
+The most challenging aspect of this process was debugging subtle issues related to filtering and sorting. The interplay between how Operations parsed conditions, how Filters applied them, and how GameSorter handled comparisons introduced complexities that were difficult to diagnose. It required carefully stepping through test failures and considering multiple edge cases. In the end, this challenge reinforced the value of clear, systematic debugging and the importance of having a well-structured test suite.
